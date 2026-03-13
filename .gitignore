@@ -5,7 +5,6 @@ __pycache__/
 
 # Large data (download separately)
 dataset/
-saved_models/
 runs/
 
 # OS / IDE

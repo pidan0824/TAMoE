@@ -1,0 +1,21 @@
+{
+  "c_in": 7,
+  "num_patch": 42,
+  "context_points": 512,
+  "target_points": 96,
+  "patch_len": 12,
+  "stride": 12,
+  "n_layers": 3,
+  "n_heads": 4,
+  "d_model": 16,
+  "d_ff": 128,
+  "dropout": 0.2,
+  "head_dropout": 0.2,
+  "d_task": 16,
+  "use_routed_expert": 1,
+  "num_experts": 8,
+  "use_shared_expert": 1,
+  "moe_top_k": 2,
+  "moe_router_fusion_mode": "concat",
+  "use_task_token": 1
+}
