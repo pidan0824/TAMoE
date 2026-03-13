@@ -1,7 +1,5 @@
-# TAMoE: A Task-Adaptive Mixture-of-Experts Method
+# How to Pre-train Time-Series Models with Multiple Pretext Tasks: A Task-Adaptive Mixture-of-Experts Method (TAMoE)
 
-How to Pre-train Time-Series Models with Multiple Pretext Tasks:
-A Task-Adaptive Mixture-of-Experts Method
 ---
 
 ## Key Components

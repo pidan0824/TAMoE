@@ -1,22 +1,11 @@
-"""
-Task Sampler for Multi-Task Pretraining.
-
-Weighted random sampling over reconstruction tasks (PM, MPM, RFM, SFM, DM, HM).
-Separated from callback logic so the masking module owns both
-*what* each task does and *how* tasks are selected.
-"""
+"""Task Sampler for Multi-Task Pretraining."""
 
 import numpy as np
 from typing import Dict, Optional, List
 
 
 class TaskSampler:
-    """Weighted random task sampler with optional single-task fast path.
-
-    Args:
-        task_probs: {task_name: weight} dict.  Weights are normalised internally.
-        seed: Optional RNG seed for reproducibility.
-    """
+    """Weighted random task sampler with optional single-task fast path."""
 
     def __init__(
         self,
@@ -24,7 +13,7 @@ class TaskSampler:
         seed: Optional[int] = None,
     ):
         total = sum(task_probs.values())
-        self.task_probs = {k: v / total for k, v in task_probs.items()}
+        self.task_probs = {k: v / total for k, v in task_probs.items() if v > 0}
         self._task_names: List[str] = list(self.task_probs.keys())
         self._task_probs_list: List[float] = [self.task_probs[t] for t in self._task_names]
         self._rng = np.random.default_rng(seed)

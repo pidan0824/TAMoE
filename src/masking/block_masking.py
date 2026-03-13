@@ -7,19 +7,7 @@ from .base import MaskingStrategy, MaskedView
 
 
 class BlockMasking(MaskingStrategy):
-    """
-    Multi-patch Block Masking (MPM): masks contiguous blocks of patches.
-    
-    Args:
-        patch_len: Length of each patch
-        stride: Stride between patches
-        mask_ratio: Target ratio of patches to mask (0.0-1.0)
-        num_blocks: Number of blocks to mask (default: auto based on mask_ratio)
-        min_block_len: Minimum length of each block (in patches)
-        max_block_len: Maximum length of each block (in patches)
-        min_gap: Minimum gap between blocks (in patches)
-        mask_value: Value to fill masked patches (default: 0)
-    """
+    """Multi-patch Block Masking (MPM): masks contiguous blocks of patches."""
     
     name = "MPM"
     requires_freq = False
@@ -47,19 +35,7 @@ class BlockMasking(MaskingStrategy):
         x: torch.Tensor, 
         ctx: Optional[Dict[str, Any]] = None
     ) -> MaskedView:
-        """
-        Create masked view with block masking.
-        
-        Args:
-            x: Input time series. Shape: [B, T, C]
-            ctx: Optional context dict with 'generator' for reproducibility
-        
-        Returns:
-            MaskedView with:
-                - x_in: Masked patches [B, N, C*patch_len]
-                - mask: Boolean mask [B, N], True = masked
-                - target_time: Original patches [B, N, C*patch_len]
-        """
+        """Create masked view. x: [B, T, C] -> MaskedView with block-masked patches."""
         ctx = ctx or {}
         generator = ctx.get('generator', None)
 
@@ -86,23 +62,7 @@ class BlockMasking(MaskingStrategy):
         device: torch.device,
         generator: Optional[torch.Generator] = None
     ) -> torch.BoolTensor:
-        """
-        Generate block-structured mask.
-        
-        Strategy:
-        1. Determine number of blocks and their lengths
-        2. Sample block start positions with minimum gap constraint
-        3. Create contiguous mask regions
-        
-        Args:
-            batch_size: Batch size B
-            num_patch: Number of patches N
-            device: Target device
-            generator: Optional random generator
-        
-        Returns:
-            mask: Boolean tensor [B, N], True = masked
-        """
+        """Generate block-structured mask [B, N], True = masked."""
         num_masked_target = int(num_patch * self.mask_ratio)
         max_block_len = self.max_block_len or max(self.min_block_len, num_patch // 4)
         
@@ -119,7 +79,7 @@ class BlockMasking(MaskingStrategy):
             blocks = self._sample_blocks(
                 num_patch, num_masked_target, num_blocks,
                 self.min_block_len, max_block_len, self.min_gap,
-                device, generator
+                generator
             )
             for start, length in blocks:
                 mask[b, start:start + length] = True
@@ -134,29 +94,14 @@ class BlockMasking(MaskingStrategy):
         min_block_len: int,
         max_block_len: int,
         min_gap: int,
-        device: torch.device,
         generator: Optional[torch.Generator] = None
     ) -> List[Tuple[int, int]]:
-        """
-        Sample block positions and lengths.
-        
-        Args:
-            num_patch: Total number of patches
-            num_masked_target: Target number of masked patches
-            num_blocks: Number of blocks to create
-            min_block_len: Minimum block length
-            max_block_len: Maximum block length
-            min_gap: Minimum gap between blocks
-            device: Device for random generation
-            generator: Optional random generator
-        
-        Returns:
-            List of (start_position, length) tuples
-        """
+        """Sample block positions and lengths. Returns list of (start, length)."""
         blocks = []
         remaining_patches = num_masked_target
         available_positions = list(range(num_patch))
-        
+        rand_device = generator.device if generator is not None else 'cpu'
+
         for i in range(num_blocks):
             if remaining_patches <= 0 or len(available_positions) < min_block_len:
                 break
@@ -183,13 +128,13 @@ class BlockMasking(MaskingStrategy):
             if not segment_candidates:
                 break
 
-            segment_idx = int(torch.randint(0, len(segment_candidates), (1,), device=device, generator=generator).item())
+            segment_idx = int(torch.randint(0, len(segment_candidates), (1,), device=rand_device, generator=generator).item())
 
             seg_start, seg_end, candidate_len = segment_candidates[segment_idx]
-            block_len = int(torch.randint(min_block_len, candidate_len + 1, (1,), device=device, generator=generator).item())
+            block_len = int(torch.randint(min_block_len, candidate_len + 1, (1,), device=rand_device, generator=generator).item())
 
             max_start = seg_end - block_len + 1
-            start_pos = int(torch.randint(seg_start, max_start + 1, (1,), device=device, generator=generator).item())
+            start_pos = int(torch.randint(seg_start, max_start + 1, (1,), device=rand_device, generator=generator).item())
 
             blocks.append((start_pos, block_len))
             

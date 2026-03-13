@@ -277,7 +277,7 @@ def test_func(weight_path=None):
     if args.seed is not None:
         set_seed(args.seed, deterministic=True)
 
-    weight_path = weight_path or build_weight_path(args.pretrained_model, args.dset_finetune, args.model_type)
+    weight_path = weight_path or build_weight_path(args.pretrained_model, args.dset, args.model_type)
     if not weight_path.endswith('.pth'):
         weight_path += '.pth'
     if _is_pretrain_checkpoint(weight_path):

@@ -49,9 +49,8 @@ class TAMoE(nn.Module):
         # Residual dropout
         self.dropout = nn.Dropout(dropout)
 
-        # Handle parameter name migration: use_shared_expert (new) vs use_task_aware_moe (old)
-        use_shared_expert = kwargs.get('use_shared_expert', kwargs.get('use_task_aware_moe', False))
-        use_routed_expert = kwargs.get('use_routed_expert', kwargs.get('use_moe', False))
+        use_shared_expert = kwargs.get('use_shared_expert', False)
+        use_routed_expert = kwargs.get('use_routed_expert', False)
 
         # Transformer encoder
         self.transformer = TransformerEncoder(d_model, n_heads, d_ff=d_ff, norm=norm, attn_dropout=attn_dropout,

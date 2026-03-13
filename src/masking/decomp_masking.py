@@ -8,18 +8,9 @@ from .base import MaskingStrategy, MaskedView
 
 
 class DecompositionModule(nn.Module):
-    """
-    Time series decomposition using moving average.
-
-    Decomposes x into trend + residual:
-        x = trend + residual
-    """
+    """Time series decomposition via moving average: x = trend + residual."""
 
     def __init__(self, kernel_size: int = 25):
-        """
-        Args:
-            kernel_size: Window size for moving average (will be adjusted to odd if even)
-        """
         super().__init__()
         self.kernel_size = kernel_size if kernel_size % 2 == 1 else kernel_size + 1
 
@@ -30,35 +21,14 @@ class DecompositionModule(nn.Module):
         )
 
     def forward(self, x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
-        """
-        Decompose time series into trend and residual.
-
-        Args:
-            x: Input tensor [B, T, C]
-
-        Returns:
-            trend: Trend component [B, T, C]
-            residual: Residual component [B, T, C]
-        """
+        """Decompose [B, T, C] -> (trend, residual), both [B, T, C]."""
         x_t = x.transpose(1, 2)          # [B, C, T]
         trend = self.avg_pool(x_t).transpose(1, 2)  # [B, T, C]
         residual = x - trend
         return trend, residual
 
 class DecompositionMasking(MaskingStrategy):
-    """
-    Decomposition-aware Masking (DM): decomposes into trend/residual
-    and applies separate mask ratios to each component.
-
-    Args:
-        patch_len: Length of each patch
-        stride: Stride between patches
-        trend_mask_ratio: Mask ratio for trend component (default: 0.2)
-        residual_mask_ratio: Mask ratio for residual component (default: 0.5)
-        decomp_kernel_size: Kernel size for moving average decomposition
-        mask_value: Value for masking
-        recon_target: 'original' | 'trend' | 'residual' (default: 'original')
-    """
+    """Decomposition-aware Masking (DM): separate mask ratios for trend/residual components."""
     
     name = "DM"
     requires_freq = False
@@ -88,16 +58,7 @@ class DecompositionMasking(MaskingStrategy):
         x: torch.Tensor, 
         ctx: Optional[Dict[str, Any]] = None
     ) -> MaskedView:
-        """
-        Create masked view with decomposition-aware masking.
-        
-        Args:
-            x: Input time series. Shape: [B, T, C]
-            ctx: Optional context dict
-        
-        Returns:
-            MaskedView with decomposition targets in aux
-        """
+        """Create masked view with decomposition masking. x: [B, T, C]."""
         ctx = ctx or {}
         generator = ctx.get('generator', None)
 
@@ -115,17 +76,18 @@ class DecompositionMasking(MaskingStrategy):
         residual_mask = self.generate_random_mask(
             B, num_patch, x.device, mask_ratio=self.residual_mask_ratio, generator=generator
         )
-        
+
+        combined_mask = trend_mask | residual_mask
+
+        # summing independently masked components
         trend_masked = self.apply_mask_to_patches(trend_patch, trend_mask)
         residual_masked = self.apply_mask_to_patches(residual_patch, residual_mask)
-        
-        # Combine masked components as encoder input
         x_masked = trend_masked + residual_masked
 
-        x_in = self.flatten_patches(x_masked)  # [B, N, C*patch_len]
+        # Mask original patches with the combined mask.
+        # x_masked = self.apply_mask_to_patches(x_patch, combined_mask)
 
-        # Union of both masks
-        combined_mask = trend_mask | residual_mask
+        x_in = self.flatten_patches(x_masked)  # [B, N, C*patch_len]
 
         # Select reconstruction target
         target_patches = {
@@ -144,6 +106,8 @@ class DecompositionMasking(MaskingStrategy):
                 'decomp': {
                     'trend_mask': trend_mask,
                     'residual_mask': residual_mask,
+                    'trend': trend_patch,
+                    'residual': residual_patch,
                 },
             }
         )

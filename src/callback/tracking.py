@@ -34,11 +34,12 @@ class TrackTrainingCB(Callback):
         super().__init__()        
         self.train_metrics, self.valid_metrics = train_metrics, valid_metrics 
 
-    def before_fit(self):        
-        self.setup()    
-        self.initialize_recorder()        
+    def before_fit(self):
+        self.setup()
+        self.initialize_recorder()
+        self.mean_reduction_ = True
         if hasattr(self.loss_func, 'reduction'):
-            self.mean_reduction_ = True if self.loss_func.reduction == 'mean' else False        
+            self.mean_reduction_ = (self.loss_func.reduction == 'mean')
     
     def setup(self):
         self.valid_loss = False

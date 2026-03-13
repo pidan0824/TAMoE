@@ -78,16 +78,16 @@ parser.add_argument('--decomp_loss_weight', type=float, default=0.5)
 # Configuration modes:
 #   1. Standard FFN (use_routed_expert=0): No MoE, just standard FFN
 #
-#   2. MoE (only routed expert, use_routed_expert=1, use_shared_expert=0): Only routed experts
+#   2. MoE (only routed experts, use_routed_expert=1, use_shared_expert=0):
 #      - Pretrain: router selects top-k experts
 #      - Finetune: router selects top-k experts (aggregation_mode='router', auto-inferred)
 #
-#   3. MoE + Shared Expert (use_routed_expert=1, use_shared_expert=1, use_task_token=0):
+#   3. Routed experts + Shared Expert (use_routed_expert=1, use_shared_expert=1, use_task_token=0):
 #      - Pretrain: y = y_shared + y_routed (no alpha schedule)
 #      - Finetune: y = y_shared + y_routed
 #
-#   4. Task-Aware MoE (use_routed_expert=1, use_shared_expert=1, use_task_token=1):
-#      - Full task-aware architecture with task token for routing
+#   4. Task-Adaptive MoE (use_routed_expert=1, use_shared_expert=1, use_task_token=1):
+#      - Full task-adaptive architecture with task token for routing
 #      - Pretrain: y = y_shared + alpha * y_routed (alpha schedule, task token guides routing)
 #      - Finetune: y = y_shared only (aggregation_mode='shared_only', auto-inferred)
 parser.add_argument('--use_routed_expert', type=int, default=0,

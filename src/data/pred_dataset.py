@@ -243,10 +243,7 @@ class Dataset_Custom(Dataset):
         df_raw.columns: [time_col_name, ...(other features), target feature]
         '''
         cols = list(df_raw.columns)
-        #cols.remove(self.target) if self.target
-        #cols.remove(self.time_col_name)
-        #df_raw = df_raw[[self.time_col_name] + cols + [self.target]]
-        
+
         num_train = int(len(df_raw) * self.train_split)
         num_test = int(len(df_raw) * self.test_split)
         num_vali = len(df_raw) - num_train - num_test

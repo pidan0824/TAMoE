@@ -149,7 +149,7 @@ class MultiTaskReconCB(Callback):
         loss_weights: Optional[Dict[str, float]] = None,
         use_task_token: bool = False,
         use_fine_grained_task_id: bool = False,
-        seed: int = None,
+        seed: Optional[int] = None,
     ):
         super().__init__()
         self.patch_len = patch_len

@@ -51,7 +51,7 @@ except ImportError:
     print("Warning: matplotlib/seaborn/sklearn not available, visualization will be skipped")
 
 
-# Task configurations — matches analyze_task_token_components.py
+# Task configurations
 # Note: In fine-grained mode, task_id 0 is reserved, tasks use IDs 1-6
 TASK_ID_MAP_VIS = {
     0: "Recon",  # Reserved (coarse mode uses this for all recon tasks)

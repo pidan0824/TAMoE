@@ -1,9 +1,4 @@
-"""
-Base classes and interfaces for masking strategies.
-
-Defines the unified interface that all masking strategies must implement,
-ensuring consistent input/output contracts for the multi-task reconstruction framework.
-"""
+"""Base classes and interfaces for masking strategies."""
 
 import torch
 import torch.nn as nn
@@ -12,16 +7,7 @@ from abc import ABC, abstractmethod
 
 
 def create_patch(xb, patch_len, stride):
-    """Convert time series to patches, aligned from the end of the sequence.
-
-    Args:
-        xb: [bs, seq_len, n_vars]
-        patch_len: patch length
-        stride: stride between patches
-
-    Returns:
-        (xb_patch [bs, num_patch, n_vars, patch_len], num_patch)
-    """
+    """Convert time series [bs, seq_len, n_vars] to patches [bs, num_patch, n_vars, patch_len], aligned from end."""
     seq_len = xb.shape[1]
     if seq_len < patch_len:
         raise ValueError(f"seq_len ({seq_len}) must be >= patch_len ({patch_len})")
@@ -54,16 +40,7 @@ class MaskedView(TypedDict, total=False):
 
 
 class MaskingStrategy(nn.Module, ABC):
-    """
-    Abstract base class for all masking strategies.
-
-    Subclasses must implement ``make_view`` to transform raw input into a MaskedView.
-
-    Attributes:
-        name: Strategy identifier (e.g., 'PM', 'MPM', 'RFM', 'SFM', 'HM', 'DM')
-        requires_freq: Whether this strategy operates in frequency domain
-        requires_decomp: Whether this strategy requires decomposition
-    """
+    """Abstract base class for all masking strategies. Subclasses implement ``make_view``."""
 
     name: str = "base"
     requires_freq: bool = False
@@ -88,16 +65,7 @@ class MaskingStrategy(nn.Module, ABC):
         x: torch.Tensor,
         ctx: Optional[Dict[str, Any]] = None
     ) -> MaskedView:
-        """
-        Create a masked view from input time series.
-
-        Args:
-            x: Input time series [B, T, C].
-            ctx: Optional context dict (e.g., pre-computed FFT, decomposition, epoch).
-
-        Returns:
-            MaskedView with x_in, mask, target_time, and optional fields.
-        """
+        """Create a masked view from input [B, T, C]."""
         pass
 
     def forward(
@@ -108,15 +76,7 @@ class MaskingStrategy(nn.Module, ABC):
         return self.make_view(x, ctx)
 
     def patchify(self, x: torch.Tensor) -> Tuple[torch.Tensor, int]:
-        """
-        Convert time series to patches, aligned from the end of the sequence.
-
-        Args:
-            x: [B, T, C]
-
-        Returns:
-            (x_patch [B, N, C, patch_len], num_patch)
-        """
+        """[B, T, C] -> (x_patch [B, N, C, patch_len], num_patch)."""
         return create_patch(x, self.patch_len, self.stride)
 
     def apply_mask_to_patches(
@@ -124,16 +84,7 @@ class MaskingStrategy(nn.Module, ABC):
         x_patch: torch.Tensor,
         mask: torch.BoolTensor
     ) -> torch.Tensor:
-        """
-        Apply mask to patches: masked positions filled with ``mask_value``.
-
-        Args:
-            x_patch: [B, N, C, patch_len]
-            mask: [B, N], True = masked
-
-        Returns:
-            x_masked: [B, N, C, patch_len]
-        """
+        """Apply mask to patches: masked positions filled with ``mask_value``."""
         x_masked = x_patch.clone()
         mask_expanded = mask.unsqueeze(-1).unsqueeze(-1).expand_as(x_masked)
         x_masked.masked_fill_(mask_expanded, self.mask_value)
@@ -147,30 +98,20 @@ class MaskingStrategy(nn.Module, ABC):
         mask_ratio: Optional[float] = None,
         generator: Optional[torch.Generator] = None
     ) -> torch.BoolTensor:
-        """Generate random patch mask [B, N] (True = masked), vectorized.
-
-        Args:
-            batch_size: Batch size B
-            num_patch: Number of patches N
-            device: Target device
-            mask_ratio: Override self.mask_ratio if provided
-            generator: Optional random generator for reproducibility
-
-        Returns:
-            mask: Boolean tensor [B, N], True = masked
-        """
+        """Generate random patch mask [B, N] (True = masked), vectorized."""
         ratio = mask_ratio if mask_ratio is not None else self.mask_ratio
         num_masked = int(num_patch * ratio)
 
-        noise = torch.rand(batch_size, num_patch, device=device, generator=generator)
+        rand_device = generator.device if generator is not None else device
+        noise = torch.rand(batch_size, num_patch, device=rand_device, generator=generator)
 
         ids_shuffle = torch.argsort(noise, dim=1)
         masked_indices = ids_shuffle[:, :num_masked]
 
-        mask = torch.zeros(batch_size, num_patch, dtype=torch.bool, device=device)
+        mask = torch.zeros(batch_size, num_patch, dtype=torch.bool, device=rand_device)
         mask.scatter_(1, masked_indices, True)
 
-        return mask
+        return mask.to(device)
 
     def flatten_patches(self, x_patch: torch.Tensor) -> torch.Tensor:
         """Flatten [B, N, C, patch_len] -> [B, N, C*patch_len]."""

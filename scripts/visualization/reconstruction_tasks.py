@@ -196,7 +196,7 @@ def visualize_combined_mask_and_input(
         ax.set_ylabel('Value', fontsize=10)
         ax.set_xlim(0, T)
 
-        if name in ['RFM', 'SFM']:
+        if name in ['RFM', 'SFM'] and view['aux'] is not None:
             freq_mask = view['aux'].get('freq_mask', None)
             if freq_mask is not None:
                 freq_mask_var = freq_mask[0, :, var_idx].cpu().numpy()
@@ -246,7 +246,7 @@ def visualize_combined_mask_and_input(
                 Line2D([0], [0], color=color_freq_highlight, linewidth=1.5, label='Freq Spectrum'),
             ]
             ax.legend(handles=legend_elements, loc='upper right', fontsize=8)
-        elif name == 'DM':
+        elif name == 'DM' and view['aux'] is not None:
             decomp = view['aux'].get('decomp', {})
 
             if 'trend' in decomp and 'residual' in decomp:

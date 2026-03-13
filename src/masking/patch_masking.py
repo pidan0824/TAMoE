@@ -1,9 +1,4 @@
-"""
-Patch Masking Strategy (PM)
-
-Random patch-level masking: randomly mask a subset of patches and
-reconstruct only the masked ones.
-"""
+"""Patch Masking Strategy (PM)."""
 
 import torch
 from typing import Optional, Dict, Any
@@ -12,12 +7,7 @@ from .base import MaskingStrategy, MaskedView
 
 
 class PatchMasking(MaskingStrategy):
-    """
-    Random Patch Masking (PM) Strategy.
-
-    Randomly masks ``mask_ratio`` of patches, replacing them with
-    ``mask_value``. Loss is computed only on masked patches.
-    """
+    """Random Patch Masking (PM): masks random patches, loss on masked only."""
 
     name = "PM"
     requires_freq = False

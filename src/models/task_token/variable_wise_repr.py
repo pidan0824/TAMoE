@@ -25,7 +25,7 @@ import math
 
 
 # ---------------------------------------------------------------------------
-# GatedFeatureRead  (merged from former gated_feature_read.py)
+# GatedFeatureRead
 # ---------------------------------------------------------------------------
 
 class GatedFeatureRead(nn.Module):
@@ -324,9 +324,7 @@ class LearnableVWR(nn.Module):
     Args:
         d_task: Query/output dimension
         nhead: Number of attention heads
-        dropout: Dropout rate
-        beta: Output scale factor (learnable, clamped to [0,1])
-        hidden_dim: Conv encoder hidden dimension
+        beta: Output scale factor
     """
 
     def __init__(

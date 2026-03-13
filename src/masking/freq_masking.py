@@ -1,13 +1,4 @@
-"""
-Frequency Domain Masking Strategies (RFM & SFM)
-
-RFM - Random Frequency Masking:
-    Randomly masks frequency components in the frequency domain.
-
-SFM - Structured Frequency Masking:
-    Masks specific frequency bands (high/low frequency) based on thresholds.
-
-"""
+"""Frequency Domain Masking Strategies (RFM & SFM)."""
 
 import torch
 from abc import abstractmethod
@@ -17,14 +8,7 @@ from .base import MaskingStrategy, MaskedView
 
 
 class FreqMaskingBase(MaskingStrategy):
-    """
-    Base class for frequency-domain masking strategies.
-
-    Implements the shared FFT pipeline:
-        x -> FFT -> subclass mask -> iFFT -> patchify -> MaskedView
-
-    Subclasses only need to implement ``_build_freq_mask``.
-    """
+    """Base for frequency-domain masking: x -> FFT -> subclass mask -> iFFT -> patchify -> MaskedView."""
 
     requires_freq = True
     requires_decomp = False
@@ -48,8 +32,8 @@ class FreqMaskingBase(MaskingStrategy):
         num_channels: int,
         device: torch.device,
         generator: Optional[torch.Generator],
-    ) -> torch.BoolTensor:
-        """Return boolean mask [B, F, C], True = masked."""
+    ) -> Tuple[torch.BoolTensor, Dict[str, Any]]:
+        """Return (boolean mask [B, F, C] True=masked, extra aux info dict)."""
 
     def make_view(
         self,
@@ -63,7 +47,7 @@ class FreqMaskingBase(MaskingStrategy):
         x_freq = torch.fft.rfft(x, dim=1)
         F = x_freq.shape[1]
 
-        freq_mask = self._build_freq_mask(B, F, C, x.device, generator)
+        freq_mask, extra_aux = self._build_freq_mask(B, F, C, x.device, generator)
 
         x_freq_masked = x_freq.clone()
         x_freq_masked[freq_mask] = 0
@@ -77,24 +61,19 @@ class FreqMaskingBase(MaskingStrategy):
         # All-False mask: frequency corruption is the pretext, loss on every patch
         patch_mask = torch.zeros(B, num_patch, dtype=torch.bool, device=x.device)
 
+        aux = {'freq_mask': freq_mask, **extra_aux}
+
         return MaskedView(
             x_in=x_in,
             mask=patch_mask,
             target_time=target_time,
             target_freq=x_freq,
-            aux=None,
+            aux=aux,
         )
 
 
 class RandomFreqMasking(FreqMaskingBase):
-    """
-    Random Frequency Masking (RFM) Strategy - FRAUG Style.
-
-    Randomly masks frequency components, then reconstructs in time domain.
-    This encourages the model to learn robust frequency representations.
-
-    Pipeline: x -> FFT -> random mask freq bins -> iFFT -> patchify -> encoder
-    """
+    """Random Frequency Masking (RFM): randomly masks frequency bins."""
 
     name = "RFM"
 
@@ -115,7 +94,7 @@ class RandomFreqMasking(FreqMaskingBase):
         num_channels: int,
         device: torch.device,
         generator: Optional[torch.Generator] = None,
-    ) -> torch.BoolTensor:
+    ) -> Tuple[torch.BoolTensor, Dict[str, Any]]:
         """Generate random frequency mask [B, F, C] (True = masked)."""
         start_idx = 1 if self.preserve_dc else 0
         maskable_bins = num_freq - start_idx
@@ -126,16 +105,11 @@ class RandomFreqMasking(FreqMaskingBase):
             dc = torch.zeros(batch_size, 1, dtype=torch.bool, device=device)
             mask_2d = torch.cat([dc, mask_2d], dim=1)
 
-        return mask_2d.unsqueeze(-1).expand(-1, -1, num_channels)
+        return mask_2d.unsqueeze(-1).expand(-1, -1, num_channels), {}
 
 
 class StructuredFreqMasking(FreqMaskingBase):
-    """
-    Structured Frequency Masking (SFM) Strategy
-
-    Masks a contiguous frequency band (low or high) delimited by threshold tau.
-    tau controls the boundary; mask_ratio is unused (kept for interface compat).
-    """
+    """Structured Frequency Masking (SFM): masks a contiguous band (low/high) delimited by tau."""
 
     name = "SFM"
 
@@ -162,7 +136,7 @@ class StructuredFreqMasking(FreqMaskingBase):
         num_channels: int,
         device: torch.device,
         generator: Optional[torch.Generator] = None,
-    ) -> torch.BoolTensor:
+    ) -> Tuple[torch.BoolTensor, Dict[str, Any]]:
         """Generate structured frequency mask [B, F, C] based on tau cutoff."""
         # Sample tau and band
         need_tau_rand = self.tau_range is not None
@@ -199,4 +173,4 @@ class StructuredFreqMasking(FreqMaskingBase):
         else:
             freq_mask[:, cutoff_idx:, :] = True
 
-        return freq_mask
+        return freq_mask, {'band': band}

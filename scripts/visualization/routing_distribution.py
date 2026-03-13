@@ -44,7 +44,7 @@ from src.callback.multi_task_callback import build_view_meta_batch
 from src.masking import (
     PatchMasking, BlockMasking,
     RandomFreqMasking, StructuredFreqMasking,
-    DecompositionMasking, HolisticMasking,
+    DecompositionMasking,
 )
 from datautils import get_dls
 
@@ -75,7 +75,7 @@ def create_mask_strategies(patch_len: int, stride: int, device: str = 'cuda'):
         'RFM': RandomFreqMasking(**base, mask_ratio=0.3),
         'SFM': StructuredFreqMasking(**base, tau=0.5, mask_band='random'),
         'DM':  DecompositionMasking(**base, trend_mask_ratio=0.2, residual_mask_ratio=0.5),
-        'HM':  HolisticMasking(**base, time_mask_ratio=0.4),
+        'HM':  PatchMasking(**base, mask_ratio=0.4),
     }
     for s in strategies.values():
         s.to(device)
@@ -218,7 +218,7 @@ def load_model_and_checkpoint(checkpoint_path: str, tt_gen_path: Optional[str] =
         n_layers=config.get('n_layers', 3), n_heads=config.get('n_heads', 4),
         d_model=config.get('d_model', 16), d_ff=config.get('d_ff', 128),
         head_type='pretrain',
-        use_routed_expert=bool(config.get('use_routed_expert', config.get('use_moe', True))),
+        use_routed_expert=bool(config.get('use_routed_expert', True)),
         num_experts=config.get('num_experts', 8),
         use_shared_expert=bool(config.get('use_shared_expert', False)),
         moe_top_k=config.get('moe_top_k', 2),
