@@ -65,7 +65,7 @@ Config: patch_len=12, stride=12, context=512, 100 epochs, 8 experts.
 
 ```bash
 python tamoe_finetune.py \
-    --dset_finetune etth1 \
+    --dset etth1 \
     --context_points 512 \
     --target_points 96 \
     --patch_len 12 --stride 12 \
@@ -96,14 +96,14 @@ python tamoe_multitask_pretrain.py \
 ```bash
 # Full fine-tuning
 python tamoe_finetune.py \
-    --dset_finetune etth1 \
+    --dset etth1 \
     --pretrained_model <path> \
     --is_finetune 1 \
     --n_epochs 30
 
 # Linear probing
 python tamoe_finetune.py \
-    --dset_finetune etth1 \
+    --dset etth1 \
     --pretrained_model <path> \
     --is_linear_probe 1 \
     --n_epochs 30

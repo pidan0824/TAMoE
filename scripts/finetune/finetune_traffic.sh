@@ -25,7 +25,7 @@ CONTEXT_POINTS=512
 # Model architecture (must match pretrained model)
 N_HEADS=16
 D_MODEL=128
-D_FF=512
+D_FF=256
 N_LAYERS=3
 PATCH_LEN=12
 STRIDE=12
@@ -53,7 +53,7 @@ for PRED in 96 192 336 720; do
     echo "[Finetune] $DATASET cw$CONTEXT_POINTS t$PRED"
 
     python tamoe_finetune.py \
-        --dset_finetune $DATASET \
+        --dset $DATASET \
         --context_points $CONTEXT_POINTS \
         --target_points $PRED \
         --patch_len $PATCH_LEN \

@@ -66,7 +66,7 @@ for dataset in "${DATASETS[@]}"; do
     fi
 
     if python tamoe_finetune.py \
-        --dset_finetune "$dataset" \
+        --dset "$dataset" \
         --is_finetune $IS_FINETUNE \
         --pretrained_model "$pretrained_model" \
         --is_linear_probe $IS_LINEAR_PROBE \

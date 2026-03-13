@@ -54,7 +54,7 @@ for PRED in 96 192 336 720; do
     echo "[Finetune] $DATASET cw$CONTEXT_POINTS t$PRED"
 
     python tamoe_finetune.py \
-        --dset_finetune $DATASET \
+        --dset $DATASET \
         --context_points $CONTEXT_POINTS \
         --target_points $PRED \
         --patch_len $PATCH_LEN \
