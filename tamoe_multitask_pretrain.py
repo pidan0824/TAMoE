@@ -137,7 +137,7 @@ parser.add_argument('--use_stat', type=int, default=1,
 parser.add_argument('--use_global_desc', type=int, default=1,
                     help='Use global descriptor in StateGate')
 parser.add_argument('--use_fine_grained_task_id', type=int, default=0,
-                    help='Fine-grained task IDs (PM=1, MPM=2, ...) instead of shared recon=1')
+                    help='Fine-grained task IDs (PM=1, MPM=2, ...) instead of shared recon=0')
 parser.add_argument('--use_learnable_vwr', type=int, default=0,
                     help='Use learnable VWR (Conv encoder + cross-attention) instead of deterministic features')
 
