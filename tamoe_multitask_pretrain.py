@@ -83,8 +83,8 @@ parser.add_argument('--decomp_loss_weight', type=float, default=0.5)
 #      - Finetune: router selects top-k experts (aggregation_mode='router', auto-inferred)
 #
 #   3. Routed experts + Shared Expert (use_routed_expert=1, use_shared_expert=1, use_task_token=0):
-#      - Pretrain: y = y_shared + y_routed (no alpha schedule)
-#      - Finetune: y = y_shared + y_routed
+#      - Pretrain: y = y_shared + alpha * y_routed (alpha schedule)
+#      - Finetune: y = y_shared + alpha * y_routed (alpha=1.0 by default, --alpha to control)
 #
 #   4. Task-Adaptive MoE (use_routed_expert=1, use_shared_expert=1, use_task_token=1):
 #      - Full task-adaptive architecture with task token for routing

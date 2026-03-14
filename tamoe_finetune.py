@@ -59,6 +59,9 @@ parser.add_argument('--aggregation_mode', type=str, default='auto',
                     help='MoE aggregation: auto infers from checkpoint config. '
                          'Config 3 (no task token): router. '
                          'Config 4 (task token): shared_only.')
+parser.add_argument('--alpha', type=float, default=1.0,
+                    help='Alpha for routed experts in router mode with shared expert: '
+                         'y = y_shared + alpha * y_routed. Default 1.0.')
 
 # Training
 parser.add_argument('--n_epochs', type=int, default=30)
@@ -196,6 +199,16 @@ def get_model(c_in, args, weight_path=None, load_weights=True, verbose=True):
             agg_mode = 'router'
 
         _set_model_aggregation_mode(model, agg_mode, verbose=verbose)
+
+        # When router mode is active with shared expert, set alpha
+        # (pretrain uses alpha schedule 0→target; finetune uses fixed value)
+        if agg_mode == 'router' and use_shared_expert:
+            from src.models.tamoe_backbone import TransformerLayer
+            for module in model.modules():
+                if isinstance(module, TransformerLayer) and module.use_shared_expert:
+                    module.set_moe_alpha(args.alpha)
+            if verbose:
+                print(f'[MoE] Set moe_alpha={args.alpha} for router mode with shared expert')
 
     if verbose:
         print(f'Model params: {sum(p.numel() for p in model.parameters() if p.requires_grad)}')

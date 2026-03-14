@@ -58,14 +58,10 @@ class FreqMaskingBase(MaskingStrategy):
         x_in = self.flatten_patches(x_patch_corrupted)
         target_time = self.flatten_patches(x_patch_original)
 
-        # All-False mask: frequency corruption is the pretext, loss on every patch
-        patch_mask = torch.zeros(B, num_patch, dtype=torch.bool, device=x.device)
-
         aux = {'freq_mask': freq_mask, **extra_aux}
 
         return MaskedView(
             x_in=x_in,
-            mask=patch_mask,
             target_time=target_time,
             target_freq=x_freq,
             aux=aux,
@@ -117,14 +113,14 @@ class StructuredFreqMasking(FreqMaskingBase):
         self,
         patch_len: int,
         stride: int,
-        mask_ratio: float = 0.5,
         mask_band: Literal['low', 'high', 'random'] = 'random',
         tau: float = 0.5,
         tau_range: Optional[Tuple[float, float]] = None,
         mask_value: float = 0.0,
         preserve_dc: bool = True,
     ):
-        super().__init__(patch_len, stride, mask_ratio, mask_value, preserve_dc)
+        # mask_ratio is not used by SFM (tau controls the cutoff), pass 0 to base
+        super().__init__(patch_len, stride, 0.0, mask_value, preserve_dc)
         self.mask_band = mask_band
         self.tau = tau
         self.tau_range = tau_range
