@@ -253,7 +253,7 @@ def get_task_probs():
         return {'PM': args.pm_prob, 'MPM': args.mpm_prob, 'RFM': args.rfm_prob,
                 'SFM': args.sfm_prob, 'DM': args.dm_prob, 'HM': args.hm_prob}
     elif args.task_mode == 'time_only':
-        return {'PM': 0.5, 'MPM': 0.5, 'RFM': 0, 'SFM': 0, 'DM': 0, 'HM': 0}
+        return {'PM': 0.25, 'MPM': 0.25, 'RFM': 0, 'SFM': 0, 'DM': 0.25, 'HM': 0.25}
     elif args.task_mode == 'freq_only':
         return {'PM': 0, 'MPM': 0, 'RFM': 0.5, 'SFM': 0.5, 'DM': 0, 'HM': 0}
     else:  # single
